@@ -25,6 +25,7 @@ function isJiraTicketTabUrl(url: string): boolean {
 
 interface StoredSettings {
   jiraBaseUrl: string
+  autoOpenOnJira: boolean
 }
 
 interface SessionState {
@@ -36,12 +37,15 @@ interface SessionState {
 }
 
 function useSettings() {
-  const [settings, setSettings] = useState<StoredSettings>({ jiraBaseUrl: '' })
+  const [settings, setSettings] = useState<StoredSettings>({ jiraBaseUrl: '', autoOpenOnJira: false })
   const [settingsReady, setSettingsReady] = useState(false)
 
   useEffect(() => {
-    chrome.storage.local.get(['jiraBaseUrl'], result => {
-      if (result.jiraBaseUrl) setSettings({ jiraBaseUrl: result.jiraBaseUrl })
+    chrome.storage.local.get(['jiraBaseUrl', 'autoOpenOnJira'], result => {
+      setSettings({
+        jiraBaseUrl: result.jiraBaseUrl ?? '',
+        autoOpenOnJira: result.autoOpenOnJira ?? false,
+      })
       setSettingsReady(true)
     })
   }, [])
@@ -378,7 +382,7 @@ export default function App() {
     : ''
 
   return (
-    <div className="w-[680px] bg-[#0d1117] text-slate-100 flex flex-col min-h-[520px]">
+    <div className="w-full h-full bg-[#0d1117] text-slate-100 flex flex-col">
       {/* Header */}
       <div className="relative flex items-center justify-between px-6 py-4 border-b border-white/8 overflow-hidden">
         <div className="absolute left-0 top-0 w-32 h-full bg-gradient-to-r from-violet-900/20 to-transparent pointer-events-none" />
@@ -418,23 +422,45 @@ export default function App() {
 
       {/* Settings panel */}
       {showSettings && (
-        <div className="animate-slide-down px-6 py-4 border-b border-white/8 bg-[#161b22]">
-          <p className="text-xs font-semibold text-slate-400 mb-2.5 uppercase tracking-wider">Jira Base URL</p>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={jiraBaseUrlInput}
-              onChange={e => setJiraBaseUrlInput(e.target.value)}
-              placeholder="https://yourcompany.atlassian.net"
-              className="flex-1 bg-[#0d1117] text-sm text-slate-100 rounded-lg px-3 py-2.5 border border-white/10 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 placeholder-slate-600 transition-all"
-            />
-            <button
-              onClick={() => { save({ jiraBaseUrl: jiraBaseUrlInput }); setShowSettings(false) }}
-              className="text-sm font-semibold bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white px-4 py-2.5 rounded-lg transition-all hover:shadow-lg hover:shadow-violet-900/40"
-            >
-              Save
-            </button>
+        <div className="animate-slide-down px-6 py-4 border-b border-white/8 bg-[#161b22] space-y-4">
+          <div>
+            <p className="text-xs font-semibold text-slate-400 mb-2.5 uppercase tracking-wider">Jira Base URL</p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={jiraBaseUrlInput}
+                onChange={e => setJiraBaseUrlInput(e.target.value)}
+                placeholder="https://yourcompany.atlassian.net"
+                className="flex-1 bg-[#0d1117] text-sm text-slate-100 rounded-lg px-3 py-2.5 border border-white/10 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 placeholder-slate-600 transition-all"
+              />
+              <button
+                onClick={() => { save({ jiraBaseUrl: jiraBaseUrlInput, autoOpenOnJira: settings.autoOpenOnJira }); setShowSettings(false) }}
+                className="text-sm font-semibold bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white px-4 py-2.5 rounded-lg transition-all hover:shadow-lg hover:shadow-violet-900/40"
+              >
+                Save
+              </button>
+            </div>
           </div>
+          <label className="flex items-center justify-between gap-3 cursor-pointer select-none">
+            <div>
+              <p className="text-xs font-semibold text-slate-300">Abrir automáticamente al detectar ticket Jira</p>
+              <p className="text-xs text-slate-500 mt-0.5">Abre la extensión al navegar a un ticket</p>
+            </div>
+            <button
+              role="switch"
+              aria-checked={settings.autoOpenOnJira}
+              onClick={() => save({ jiraBaseUrl: settings.jiraBaseUrl, autoOpenOnJira: !settings.autoOpenOnJira })}
+              className={clsx(
+                'relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200',
+                settings.autoOpenOnJira ? 'bg-violet-600' : 'bg-slate-700'
+              )}
+            >
+              <span className={clsx(
+                'pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform duration-200',
+                settings.autoOpenOnJira ? 'translate-x-4' : 'translate-x-0'
+              )} />
+            </button>
+          </label>
         </div>
       )}
 

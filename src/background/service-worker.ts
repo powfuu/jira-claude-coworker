@@ -19,9 +19,10 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   chrome.action.setBadgeText({ text: '●', tabId })
   chrome.action.setBadgeBackgroundColor({ color: '#7c3aed', tabId })
 
-  // Try to open popup automatically (Chrome 127+, requires activeTab)
-  // Falls back silently if not supported or tab not active
-  tryOpenPopup(tabId)
+  // Only auto-open if user has enabled the setting (default: off)
+  chrome.storage.local.get(['autoOpenOnJira'], result => {
+    if (result.autoOpenOnJira === true) tryOpenPopup(tabId)
+  })
 })
 
 // Clear badge when leaving Jira ticket
