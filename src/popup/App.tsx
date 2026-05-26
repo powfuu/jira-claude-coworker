@@ -37,14 +37,14 @@ interface SessionState {
 }
 
 function useSettings() {
-  const [settings, setSettings] = useState<StoredSettings>({ jiraBaseUrl: '', autoOpenOnJira: false })
+  const [settings, setSettings] = useState<StoredSettings>({ jiraBaseUrl: '', autoOpenOnJira: true })
   const [settingsReady, setSettingsReady] = useState(false)
 
   useEffect(() => {
     chrome.storage.local.get(['jiraBaseUrl', 'autoOpenOnJira'], result => {
       setSettings({
         jiraBaseUrl: result.jiraBaseUrl ?? '',
-        autoOpenOnJira: result.autoOpenOnJira ?? false,
+        autoOpenOnJira: result.autoOpenOnJira ?? true,
       })
       setSettingsReady(true)
     })
@@ -273,7 +273,7 @@ export default function App() {
     }
 
     if (parsed.baseUrl && !settings.jiraBaseUrl) {
-      save({ jiraBaseUrl: parsed.baseUrl })
+      save({ jiraBaseUrl: parsed.baseUrl, autoOpenOnJira: settings.autoOpenOnJira })
     }
 
     try {
@@ -443,8 +443,8 @@ export default function App() {
           </div>
           <label className="flex items-center justify-between gap-3 cursor-pointer select-none">
             <div>
-              <p className="text-xs font-semibold text-slate-300">Abrir automáticamente al detectar ticket Jira</p>
-              <p className="text-xs text-slate-500 mt-0.5">Abre la extensión al navegar a un ticket</p>
+              <p className="text-xs font-semibold text-slate-300">Auto-open when Jira ticket detected</p>
+              <p className="text-xs text-slate-500 mt-0.5">Opens the extension when navigating to a ticket</p>
             </div>
             <button
               role="switch"
